@@ -119,7 +119,7 @@ world = {
         WEST: 'Used Anvils Store',
         GROUND: []},
     'Used Anvils Store': {
-        DESC: 'The anvil store has anvils of all types and sizes, each previously-owned but still in servicable condition. However, due to a bug in the way this game is designed, you can buy anvils like any other item and walk around, but if you drop them they cannot be picked up since their TAKEABLE value is set to False. LOL',
+        DESC: 'The anvil store has anvils of all types and sizes, each previously-owned but still in servicable condition. However, due to a bug in the way this game is designed, you can buy anvils like any other item and walk around, but if you drop them they cannot be picked up since their TAKEABLE value is set to False. The code should be changed so that it\'s not possible for shops to sell items with TAKEABLE set to False.',
         EAST: 'West X Street',
         SHOP: ['Anvil'],
         GROUND: ['Anvil', 'Anvil', 'Anvil', 'Anvil']},
