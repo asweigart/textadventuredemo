@@ -390,34 +390,15 @@ You can also just type in the direction for short."""
 
         # if the user has only typed "move" but no direction:
         if direction == '':
-            if NORTH in world[location]:
-                possibleDirections.append(NORTH)
-            if SOUTH in world[location]:
-                possibleDirections.append(SOUTH)
-            if EAST in world[location]:
-                possibleDirections.append(EAST)
-            if WEST in world[location]:
-                possibleDirections.append(WEST)
-            if UP in world[location]:
-                possibleDirections.append(UP)
-            if DOWN in world[location]:
-                possibleDirections.append(DOWN)
+            for d in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
+                if d in world[location]:
+                    possibleDirections.append(d)
             return possibleDirections
 
         # complete rest of the direction
-        if NORTH.startswith(direction):
-            possibleDirections.append(NORTH)
-        if SOUTH.startswith(direction):
-            possibleDirections.append(SOUTH)
-        if EAST.startswith(direction):
-            possibleDirections.append(EAST)
-        if WEST.startswith(direction):
-            possibleDirections.append(WEST)
-        if UP.startswith(direction):
-            possibleDirections.append(UP)
-        if DOWN.startswith(direction):
-            possibleDirections.append(DOWN)
-
+        for d in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
+            if d.startswith(direction):
+                possibleDirections.append(d)
         return possibleDirections
 
     # These direction commands have a long (i.e. north) and show (i.e. n) form.
