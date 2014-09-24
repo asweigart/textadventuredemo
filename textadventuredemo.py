@@ -351,7 +351,6 @@ def getFirstItemMatchingDesc(desc, itemList):
     return None
 
 def getAllItemsMatchingDesc(desc, itemList):
-    pass # TODO - not sure if I'll need this
     itemList = list(set(itemList)) # make itemList unique
     matchingItems = []
     for item in itemList:
@@ -374,40 +373,6 @@ class TextAdventureCmd(cmd.Cmd):
     def help_combat(self):
         print('Combat is not implemented in this program.')
 
-
-    def do_move(self, line):
-        """"move <direction> - Move in the direction, one of: north, south, east, west, up, down.
-You can also just type in the direction for short."""
-        direction = line.lower().strip()
-
-        # handle the case where the player enters n, s, e, w, u, or d:
-        directionNames = {'n': 'north', 's': 'south', 'e': 'east', 'w': 'west', 'u':'up', 'd':'down'}
-        if direction in directionNames.keys():
-            direction = directionNames[direction]
-
-        moveDirection(direction)
-
-    def complete_move(self, text, line, begidx, endidx):
-        direction = text.lower().strip()
-
-        for d in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-            if line.startswith('move %s' % (d)):
-                return [] # command is complete
-
-        possibleDirections = []
-
-        # if the user has only typed "move" but no direction:
-        if direction == '':
-            for d in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-                if d in worldRooms[location]:
-                    possibleDirections.append(d)
-            return possibleDirections
-
-        # complete rest of the direction
-        for d in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-            if d.startswith(direction):
-                possibleDirections.append(d)
-        return possibleDirections
 
     # These direction commands have a long (i.e. north) and show (i.e. n) form.
     # Since the code is basically the same, I put it in the moveDirection()
@@ -484,7 +449,7 @@ You can also just type in the direction for short."""
         """"take <item> - Take an item on the ground."""
 
         # put this value in a more suitably named variable
-        itemToTake = line.lower().strip()
+        itemToTake = line.lower()
 
         if itemToTake == '':
             print('Take what? Type "look" the items on the ground here.')
@@ -510,7 +475,7 @@ You can also just type in the direction for short."""
 
     def complete_take(self, text, line, begidx, endidx):
         possibleItems = []
-        text = text.lower().strip()
+        text = text.lower()
 
         # if the user has only typed "take" but no item name:
         if not text:
@@ -529,7 +494,7 @@ You can also just type in the direction for short."""
         """"drop <item> - Drop an item from your inventory onto the ground."""
 
         # put this value in a more suitably named variable
-        itemToDrop = line.lower().strip()
+        itemToDrop = line.lower()
 
         # get a list of all "description words" for each item in the inventory
         invDescWords = getAllDescWords(inventory)
@@ -549,7 +514,7 @@ You can also just type in the direction for short."""
 
     def complete_drop(self, text, line, begidx, endidx):
         possibleItems = []
-        itemToDrop = text.lower().strip()
+        itemToDrop = text.lower()
 
         # get a list of all "description words" for each item in the inventory
         invDescWords = getAllDescWords(inventory)
@@ -577,7 +542,7 @@ You can also just type in the direction for short."""
 "look exits" - display the description of all adjacent areas
 "look <item>" - display the description of an item on the ground or in your inventory"""
 
-        lookingAt = line.lower().strip()
+        lookingAt = line.lower()
         if lookingAt == '':
             # "look" will re-print the area description
             displayLocation(location)
@@ -623,7 +588,7 @@ You can also just type in the direction for short."""
 
     def complete_look(self, text, line, begidx, endidx):
         possibleItems = []
-        lookingAt = text.lower().strip()
+        lookingAt = text.lower()
 
         # get a list of all "description words" for each item in the inventory
         invDescWords = getAllDescWords(inventory)
@@ -672,7 +637,7 @@ You can also just type in the direction for short."""
             print('This is not a shop.')
             return
 
-        line = line.lower().strip()
+        line = line.lower()
 
         print('For sale:')
         for item in worldRooms[location][SHOP]:
@@ -687,7 +652,7 @@ You can also just type in the direction for short."""
             print('This is not a shop.')
             return
 
-        itemToBuy = line.lower().strip()
+        itemToBuy = line.lower()
 
         if itemToBuy == '':
             print('Buy what? Type "list" or "list full" to see a list of items for sale.')
@@ -709,7 +674,7 @@ You can also just type in the direction for short."""
         if SHOP not in worldRooms[location]:
             return []
 
-        itemToBuy = text.lower().strip()
+        itemToBuy = text.lower()
         possibleItems = []
 
         # if the user has only typed "buy" but no item name:
@@ -731,7 +696,7 @@ You can also just type in the direction for short."""
             print('This is not a shop.')
             return
 
-        itemToSell = line.lower().strip()
+        itemToSell = line.lower()
 
         if itemToSell == '':
             print('Sell what? Type "inventory" or "inv" to see your inventory.')
@@ -752,7 +717,7 @@ You can also just type in the direction for short."""
         if SHOP not in worldRooms[location]:
             return []
 
-        itemToSell = text.lower().strip()
+        itemToSell = text.lower()
         possibleItems = []
 
         # if the user has only typed "sell" but no item name:
@@ -770,14 +735,11 @@ You can also just type in the direction for short."""
 
     def do_eat(self, line):
         """"eat <item>" - eat an item in your inventory."""
-        itemToEat = line.lower().strip()
+        itemToEat = line.lower()
 
         if itemToEat == '':
             print('Eat what? Type "inventory" or "inv" to see your inventory.')
             return
-
-        # get a unique list of all description words for all items in your inventory
-        itemDescWords = getAllDescWords(inventory)
 
         cantEat = False
 
@@ -798,7 +760,7 @@ You can also just type in the direction for short."""
 
 
     def complete_eat(self, text, line, begidx, endidx):
-        itemToEat = text.lower().strip()
+        itemToEat = text.lower()
         possibleItems = []
 
         # if the user has only typed "eat" but no item name:

@@ -351,7 +351,6 @@ def getFirstItemMatchingDesc(desc, itemList):
     return None
 
 def getAllItemsMatchingDesc(desc, itemList):
-    pass # TODO - not sure if I'll need this
     itemList = list(set(itemList)) # make itemList unique
     matchingItems = []
     for item in itemList:
