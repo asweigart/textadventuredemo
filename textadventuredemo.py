@@ -33,7 +33,7 @@ The town looks something like this:
 +------++------O--+    +----O----+
 | Used |
 |Anvils|        Town Square     +--------+
-|      |                        |Obs Deck|
+|      O                        |Obs Deck|
 +------++----O----+    +----O----/  /
         | Black-  O    | Wizard /  /
         | smith   |    | Tower    /
@@ -81,12 +81,12 @@ variables (e.g. DESC, NORTH, etc.) instead of strings in case we make
 typos.
 
 DESC is a text description of the area. SHOP, if it exists, is a list of
-objects that can be bought at this area. (We don't implement money in this
-program, so everything is free.) GROUND is a list of objects that are on
+items that can be bought at this area. (We don't implement money in this
+program, so everything is free.) GROUND is a list of items that are on
 the ground in this area. The directions (NORTH, SOUTH, UP, etc.) are the
 areas that exist in that direction.
 """
-world = {
+worldRooms = {
     'Town Square': {
         DESC: 'The town square is a large open space with a fountain in the center. Streets lead in all directions.',
         NORTH: 'North Y Street',
@@ -158,15 +158,15 @@ world = {
     }
 
 """
-This is the index of all possible objects in the game world. Note that These
-key-value pairs are more like blueprints than actual objects. The actual
-objects exist in the GROUND value in an area's entry in the world variable.
+This is the index of all possible items in the game world. Note that These
+key-value pairs are more like blueprints than actual items. The actual
+items exist in the GROUND value in an area's entry in the world variable.
 
 The GROUNDDESC value is a short string that displays in the area's description.
 The SHORTDESC value is a short string that will be used in sentences like, "You
 drop X." or "You buy X."
-The LONGDESC value is displayed when the player looks at the object.
-The TAKEABLE Boolean value is True if the player can pick up the object and put
+The LONGDESC value is displayed when the player looks at the item.
+The TAKEABLE Boolean value is True if the player can pick up the item and put
 it in their inventory.
 The DESCWORDS value is a list of strings that can be used in the player's
 commands. For example, if this is ['welcome', 'sign'] then the player can type
@@ -176,7 +176,7 @@ this key doesn't exist, it defaults to True.
 The EDIBLE value is True if the item can be eaten. If this key doesn't exist,
 it defaults to False.
 """
-objects = {
+worldItems = {
     'Welcome Sign': {
         GROUNDDESC: 'A welcome sign stands here.',
         SHORTDESC: 'a welcome sign',
@@ -276,47 +276,63 @@ objects = {
 """
 These variables track where the player is and what is in their inventory.
 The value in the location variable will always be a key in the world variable
-and the value in the inventory list will always be a key in the objects
+and the value in the inventory list will always be a key in the worldItems
 variable.
 """
 location = 'Town Square' # start in town square
 inventory = ['README Note', 'Sword', 'Donut'] # start with blank inventory
 showFullExits = True
 
-import cmd, sys, textwrap
+import cmd, textwrap
+
+def displayLocation(loc):
+    """A helper function for displaying an area's description and exits."""
+    # Print the room name.
+    print(loc)
+    print('=' * len(loc))
+
+    # Print the room's description (using textwrap.wrap())
+    print('\n'.join(textwrap.wrap(worldRooms[loc][DESC], SCREEN_WIDTH)))
+
+    # Print all the items on the ground.
+    if len(worldRooms[loc][GROUND]) > 0:
+        print()
+        for item in worldRooms[loc][GROUND]:
+            print(worldItems[item][GROUNDDESC])
+
+    # Print all the exits.
+    exits = []
+    for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
+        if direction in worldRooms[loc].keys():
+            exits.append(direction.title())
+    print()
+    if showFullExits:
+        for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
+            if direction in worldRooms[location]:
+                print('%s: %s' % (direction.title(), worldRooms[location][direction]))
+    else:
+        print('Exits: %s' % ' '.join(exits))
+
 
 def moveDirection(direction):
     """A helper function that changes the location of the player."""
     global location
 
-    if direction in world[location]:
+    if direction in worldRooms[location]:
         print('You move to the %s.' % direction)
-        location = world[location][direction]
+        location = worldRooms[location][direction]
         displayLocation(location)
     else:
         print('You cannot move in that direction')
 
 
-def displayLocation(loc):
-    """A helper function for displaying an area's description and exits."""
-    print(loc)
-    print('=' * len(loc))
-    print('\n'.join(textwrap.wrap(world[loc][DESC], SCREEN_WIDTH)))
-    if len(world[loc][GROUND]) > 0:
-        print()
-        for item in world[loc][GROUND]:
-            print(objects[item][GROUNDDESC])
-    exits = []
-    for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-        if direction in world[loc].keys():
-            exits.append(direction.title())
-    print()
-    if showFullExits:
-        for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-            if direction in world[location]:
-                print('%s: %s' % (direction.title(), world[location][direction]))
-    else:
-        print('Exits: %s' % ' '.join(exits))
+def getAllDescWords(itemList):
+    """Returns a list of "description words" for each item named in itemList."""
+    itemList = list(set(itemList)) # make itemList unique
+    descWords = []
+    for item in itemList:
+        descWords.extend(worldItems[item][DESCWORDS])
+    return list(set(descWords))
 
 def getAllFirstDescWords(itemList):
     """Returns a list of the first "description word" in the list of
@@ -324,21 +340,13 @@ def getAllFirstDescWords(itemList):
     itemList = list(set(itemList)) # make itemList unique
     descWords = []
     for item in itemList:
-        descWords.append(objects[item][DESCWORDS][0])
-    return list(set(descWords))
-
-def getAllDescWords(itemList):
-    """Returns a list of "description words" for each item named in itemList."""
-    itemList = list(set(itemList)) # make itemList unique
-    descWords = []
-    for item in itemList:
-        descWords.extend(objects[item][DESCWORDS])
+        descWords.append(worldItems[item][DESCWORDS][0])
     return list(set(descWords))
 
 def getFirstItemMatchingDesc(desc, itemList):
     itemList = list(set(itemList)) # make itemList unique
     for item in itemList:
-        if desc in objects[item][DESCWORDS]:
+        if desc in worldItems[item][DESCWORDS]:
             return item
     return None
 
@@ -347,7 +355,7 @@ def getAllItemsMatchingDesc(desc, itemList):
     itemList = list(set(itemList)) # make itemList unique
     matchingItems = []
     for item in itemList:
-        if desc in objects[item][DESCWORDS]:
+        if desc in worldItems[item][DESCWORDS]:
             matchingItems.append(item)
     return matchingItems
 
@@ -391,7 +399,7 @@ You can also just type in the direction for short."""
         # if the user has only typed "move" but no direction:
         if direction == '':
             for d in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-                if d in world[location]:
+                if d in worldRooms[location]:
                     possibleDirections.append(d)
             return possibleDirections
 
@@ -472,6 +480,51 @@ You can also just type in the direction for short."""
     do_inv = do_inventory
 
 
+    def do_take(self, line):
+        """"take <item> - Take an item on the ground."""
+
+        # put this value in a more suitably named variable
+        itemToTake = line.lower().strip()
+
+        if itemToTake == '':
+            print('Take what? Type "look" the items on the ground here.')
+            return
+
+        cantTake = False
+
+        # get the item name that the player's command describes
+        for item in getAllItemsMatchingDesc(itemToTake, worldRooms[location][GROUND]):
+            if worldItems[item].get(TAKEABLE, True) == False:
+                cantTake = True
+                continue # there may be other items named this that you can take, so we continue checking
+            print('You take %s.' % (worldItems[item][SHORTDESC]))
+            worldRooms[location][GROUND].remove(item) # remove from the ground
+            inventory.append(item) # add to inventory
+            return
+
+        if cantTake:
+            print('You cannot take "%s".' % (itemToTake))
+        else:
+            print('That is not on the ground.')
+
+
+    def complete_take(self, text, line, begidx, endidx):
+        possibleItems = []
+        text = text.lower().strip()
+
+        # if the user has only typed "take" but no item name:
+        if not text:
+            return getAllFirstDescWords(worldRooms[location][GROUND])
+
+        # otherwise, get a list of all "description words" for ground items matching the command text so far:
+        for item in list(set(worldRooms[location][GROUND])):
+            for descWord in worldItems[item][DESCWORDS]:
+                if descWord.startswith(text) and worldItems[item].get(TAKEABLE, True):
+                    possibleItems.append(descWord)
+
+        return list(set(possibleItems)) # make list unique
+
+
     def do_drop(self, line):
         """"drop <item> - Drop an item from your inventory onto the ground."""
 
@@ -489,9 +542,9 @@ You can also just type in the direction for short."""
         # get the item name that the player's command describes
         item = getFirstItemMatchingDesc(itemToDrop, inventory)
         if item != None:
-            print('You drop %s.' % (objects[item][SHORTDESC]))
+            print('You drop %s.' % (worldItems[item][SHORTDESC]))
             inventory.remove(item) # remove from inventory
-            world[location][GROUND].append(item) # add to the ground
+            worldRooms[location][GROUND].append(item) # add to the ground
             return
 
     def complete_drop(self, text, line, begidx, endidx):
@@ -518,11 +571,11 @@ You can also just type in the direction for short."""
 
 
     def do_look(self, line):
-        """Look at an object, direction, or the area:
+        """Look at an item, direction, or the area:
 "look" - display the current area's description
 "look <direction>" - display the description of the area in that direction
 "look exits" - display the description of all adjacent areas
-"look <object>" - display the description of an object on the ground or in your inventory"""
+"look <item>" - display the description of an item on the ground or in your inventory"""
 
         lookingAt = line.lower().strip()
         if lookingAt == '':
@@ -532,37 +585,37 @@ You can also just type in the direction for short."""
 
         if lookingAt == 'exits':
             for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-                if direction in world[location]:
-                    print('%s: %s' % (direction.title(), world[location][direction]))
+                if direction in worldRooms[location]:
+                    print('%s: %s' % (direction.title(), worldRooms[location][direction]))
             return
 
         if lookingAt in ('north', 'west', 'east', 'south', 'up', 'down', 'n', 'w', 'e', 's', 'u', 'd'):
-            if lookingAt.startswith('n') and NORTH in world[location]:
-                print(world[location][NORTH])
-            elif lookingAt.startswith('w') and WEST in world[location]:
-                print(world[location][WEST])
-            elif lookingAt.startswith('e') and EAST in world[location]:
-                print(world[location][EAST])
-            elif lookingAt.startswith('s') and SOUTH in world[location]:
-                print(world[location][SOUTH])
-            elif lookingAt.startswith('u') and UP in world[location]:
-                print(world[location][UP])
-            elif lookingAt.startswith('d') and DOWN in world[location]:
-                print(world[location][DOWN])
+            if lookingAt.startswith('n') and NORTH in worldRooms[location]:
+                print(worldRooms[location][NORTH])
+            elif lookingAt.startswith('w') and WEST in worldRooms[location]:
+                print(worldRooms[location][WEST])
+            elif lookingAt.startswith('e') and EAST in worldRooms[location]:
+                print(worldRooms[location][EAST])
+            elif lookingAt.startswith('s') and SOUTH in worldRooms[location]:
+                print(worldRooms[location][SOUTH])
+            elif lookingAt.startswith('u') and UP in worldRooms[location]:
+                print(worldRooms[location][UP])
+            elif lookingAt.startswith('d') and DOWN in worldRooms[location]:
+                print(worldRooms[location][DOWN])
             else:
                 print('There is nothing in that direction.')
             return
 
         # see if the item being looked at is on the ground at this location
-        item = getFirstItemMatchingDesc(lookingAt, world[location][GROUND])
+        item = getFirstItemMatchingDesc(lookingAt, worldRooms[location][GROUND])
         if item != None:
-            print('\n'.join(textwrap.wrap(objects[item][LONGDESC], SCREEN_WIDTH)))
+            print('\n'.join(textwrap.wrap(worldItems[item][LONGDESC], SCREEN_WIDTH)))
             return
 
         # see if the item being looked at is in the inventory
         item = getFirstItemMatchingDesc(lookingAt, inventory)
         if item != None:
-            print('\n'.join(textwrap.wrap(objects[item][LONGDESC], SCREEN_WIDTH)))
+            print('\n'.join(textwrap.wrap(worldItems[item][LONGDESC], SCREEN_WIDTH)))
             return
 
         print('You do not see that nearby.')
@@ -574,8 +627,8 @@ You can also just type in the direction for short."""
 
         # get a list of all "description words" for each item in the inventory
         invDescWords = getAllDescWords(inventory)
-        groundDescWords = getAllDescWords(world[location][GROUND])
-        shopDescWords = getAllDescWords(world[location].get(SHOP, []))
+        groundDescWords = getAllDescWords(worldRooms[location][GROUND])
+        shopDescWords = getAllDescWords(worldRooms[location].get(SHOP, []))
 
         for descWord in invDescWords + groundDescWords + shopDescWords + [NORTH, SOUTH, EAST, WEST, UP, DOWN]:
             if line.startswith('look %s' % (descWord)):
@@ -583,10 +636,10 @@ You can also just type in the direction for short."""
 
         # if the user has only typed "look" but no item name, show all items on ground, shop and directions:
         if lookingAt == '':
-            possibleItems.extend(getAllFirstDescWords(world[location][GROUND]))
-            possibleItems.extend(getAllFirstDescWords(world[location].get(SHOP, [])))
+            possibleItems.extend(getAllFirstDescWords(worldRooms[location][GROUND]))
+            possibleItems.extend(getAllFirstDescWords(worldRooms[location].get(SHOP, [])))
             for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-                if direction in world[location]:
+                if direction in worldRooms[location]:
                     possibleItems.append(direction)
             return list(set(possibleItems)) # make list unique
 
@@ -613,69 +666,24 @@ You can also just type in the direction for short."""
         return list(set(possibleItems)) # make list unique
 
 
-    def do_take(self, line):
-        """"take <item> - Take an item on the ground."""
-
-        # put this value in a more suitably named variable
-        itemToTake = line.lower().strip()
-
-        if itemToTake == '':
-            print('Take what? Type "look" the items on the ground here.')
-            return
-
-        cantTake = False
-
-        # get the item name that the player's command describes
-        for item in getAllItemsMatchingDesc(itemToTake, world[location][GROUND]):
-            if objects[item].get(TAKEABLE, True) == False:
-                cantTake = True
-                continue # there may be other items named this that you can take, so we continue checking
-            print('You take %s.' % (objects[item][SHORTDESC]))
-            world[location][GROUND].remove(item) # remove from the ground
-            inventory.append(item) # add to inventory
-            return
-
-        if cantTake:
-            print('You cannot take "%s".' % (itemToTake))
-        else:
-            print('That is not on the ground.')
-
-
-    def complete_take(self, text, line, begidx, endidx):
-        possibleItems = []
-        text = text.lower().strip()
-
-        # if the user has only typed "take" but no item name:
-        if not text:
-            return getAllFirstDescWords(world[location][GROUND])
-
-        # otherwise, get a list of all "description words" for ground items matching the command text so far:
-        for item in list(set(world[location][GROUND])):
-            for descWord in objects[item][DESCWORDS]:
-                if descWord.startswith(text) and objects[item].get(TAKEABLE, True):
-                    possibleItems.append(descWord)
-
-        return list(set(possibleItems)) # make list unique
-
-
     def do_list(self, line):
         """List the items for sale at the current location's shop. "list full" will show details of the items."""
-        if SHOP not in world[location]:
+        if SHOP not in worldRooms[location]:
             print('This is not a shop.')
             return
 
         line = line.lower().strip()
 
         print('For sale:')
-        for item in world[location][SHOP]:
+        for item in worldRooms[location][SHOP]:
             print('  - %s' % (item))
             if line == 'full':
-                print('\n'.join(textwrap.wrap(objects[item][LONGDESC], SCREEN_WIDTH)))
+                print('\n'.join(textwrap.wrap(worldItems[item][LONGDESC], SCREEN_WIDTH)))
 
 
     def do_buy(self, line):
         """"buy <item>" - buy an item at the current location's shop."""
-        if SHOP not in world[location]:
+        if SHOP not in worldRooms[location]:
             print('This is not a shop.')
             return
 
@@ -685,12 +693,12 @@ You can also just type in the direction for short."""
             print('Buy what? Type "list" or "list full" to see a list of items for sale.')
             return
 
-        item = getFirstItemMatchingDesc(itemToBuy, world[location][SHOP])
+        item = getFirstItemMatchingDesc(itemToBuy, worldRooms[location][SHOP])
         if item != None:
             # NOTE - If you wanted to implement money, here is where you would add
             # code that checks if the player has enough, then deducts the price
             # from their money.
-            print('You have purchased %s' % (objects[item][SHORTDESC]))
+            print('You have purchased %s' % (worldItems[item][SHORTDESC]))
             inventory.append(item)
             return
 
@@ -698,7 +706,7 @@ You can also just type in the direction for short."""
 
 
     def complete_buy(self, text, line, begidx, endidx):
-        if SHOP not in world[location]:
+        if SHOP not in worldRooms[location]:
             return []
 
         itemToBuy = text.lower().strip()
@@ -706,11 +714,11 @@ You can also just type in the direction for short."""
 
         # if the user has only typed "buy" but no item name:
         if not itemToBuy:
-            return getAllFirstDescWords(world[location][SHOP])
+            return getAllFirstDescWords(worldRooms[location][SHOP])
 
         # otherwise, get a list of all "description words" for shop items matching the command text so far:
-        for item in list(set(world[location][SHOP])):
-            for descWord in objects[item][DESCWORDS]:
+        for item in list(set(worldRooms[location][SHOP])):
+            for descWord in worldItems[item][DESCWORDS]:
                 if descWord.startswith(text):
                     possibleItems.append(descWord)
 
@@ -719,7 +727,7 @@ You can also just type in the direction for short."""
 
     def do_sell(self, line):
         """"sell <item>" - sell an item at the current location's shop."""
-        if SHOP not in world[location]:
+        if SHOP not in worldRooms[location]:
             print('This is not a shop.')
             return
 
@@ -730,10 +738,10 @@ You can also just type in the direction for short."""
             return
 
         for item in inventory:
-            if itemToSell in objects[item][DESCWORDS]:
+            if itemToSell in worldItems[item][DESCWORDS]:
                 # NOTE - If you wanted to implement money, here is where you would add
                 # code that gives the player money for selling the item.
-                print('You have sold %s' % (objects[item][SHORTDESC]))
+                print('You have sold %s' % (worldItems[item][SHORTDESC]))
                 inventory.remove(item)
                 return
 
@@ -741,7 +749,7 @@ You can also just type in the direction for short."""
 
 
     def complete_sell(self, text, line, begidx, endidx):
-        if SHOP not in world[location]:
+        if SHOP not in worldRooms[location]:
             return []
 
         itemToSell = text.lower().strip()
@@ -753,7 +761,7 @@ You can also just type in the direction for short."""
 
         # otherwise, get a list of all "description words" for inventory items matching the command text so far:
         for item in list(set(inventory)):
-            for descWord in objects[item][DESCWORDS]:
+            for descWord in worldItems[item][DESCWORDS]:
                 if descWord.startswith(text):
                     possibleItems.append(descWord)
 
@@ -774,12 +782,12 @@ You can also just type in the direction for short."""
         cantEat = False
 
         for item in getAllItemsMatchingDesc(itemToEat, inventory):
-            if objects[item].get(EDIBLE, False) == False:
+            if worldItems[item].get(EDIBLE, False) == False:
                 cantEat = True
                 continue # there may be other items named this that you can eat, so we continue checking
             # NOTE - If you wanted to implement hunger levels, here is where
             # you would add code that changes the player's hunger level.
-            print('You eat %s' % (objects[item][SHORTDESC]))
+            print('You eat %s' % (worldItems[item][SHORTDESC]))
             inventory.remove(item)
             return
 
@@ -799,8 +807,8 @@ You can also just type in the direction for short."""
 
         # otherwise, get a list of all "description words" for edible inventory items matching the command text so far:
         for item in list(set(inventory)):
-            for descWord in objects[item][DESCWORDS]:
-                if descWord.startswith(text) and objects[item].get(EDIBLE, False):
+            for descWord in worldItems[item][DESCWORDS]:
+                if descWord.startswith(text) and worldItems[item].get(EDIBLE, False):
                     possibleItems.append(descWord)
 
         return list(set(possibleItems)) # make list unique

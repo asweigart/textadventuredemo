@@ -33,7 +33,7 @@ The town looks something like this:
 +------++------O--+    +----O----+
 | Used |
 |Anvils|        Town Square     +--------+
-|      |                        |Obs Deck|
+|      O                        |Obs Deck|
 +------++----O----+    +----O----/  /
         | Black-  O    | Wizard /  /
         | smith   |    | Tower    /
@@ -81,12 +81,12 @@ variables (e.g. DESC, NORTH, etc.) instead of strings in case we make
 typos.
 
 DESC is a text description of the area. SHOP, if it exists, is a list of
-objects that can be bought at this area. (We don't implement money in this
-program, so everything is free.) GROUND is a list of objects that are on
+items that can be bought at this area. (We don't implement money in this
+program, so everything is free.) GROUND is a list of items that are on
 the ground in this area. The directions (NORTH, SOUTH, UP, etc.) are the
 areas that exist in that direction.
 """
-world = {
+worldRooms = {
     'Town Square': {
         DESC: 'The town square is a large open space with a fountain in the center. Streets lead in all directions.',
         NORTH: 'North Y Street',
@@ -158,15 +158,15 @@ world = {
     }
 
 """
-This is the index of all possible objects in the game world. Note that These
-key-value pairs are more like blueprints than actual objects. The actual
-objects exist in the GROUND value in an area's entry in the world variable.
+This is the index of all possible items in the game world. Note that These
+key-value pairs are more like blueprints than actual items. The actual
+items exist in the GROUND value in an area's entry in the world variable.
 
 The GROUNDDESC value is a short string that displays in the area's description.
 The SHORTDESC value is a short string that will be used in sentences like, "You
 drop X." or "You buy X."
-The LONGDESC value is displayed when the player looks at the object.
-The TAKEABLE Boolean value is True if the player can pick up the object and put
+The LONGDESC value is displayed when the player looks at the item.
+The TAKEABLE Boolean value is True if the player can pick up the item and put
 it in their inventory.
 The DESCWORDS value is a list of strings that can be used in the player's
 commands. For example, if this is ['welcome', 'sign'] then the player can type
@@ -176,7 +176,7 @@ this key doesn't exist, it defaults to True.
 The EDIBLE value is True if the item can be eaten. If this key doesn't exist,
 it defaults to False.
 """
-objects = {
+worldItems = {
     'Welcome Sign': {
         GROUNDDESC: 'A welcome sign stands here.',
         SHORTDESC: 'a welcome sign',
@@ -272,4 +272,3 @@ objects = {
         EDIBLE: True,
         DESCWORDS: ['howto', 'note', 'shop']},
     }
-

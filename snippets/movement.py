@@ -33,7 +33,7 @@ The town looks something like this:
 +------++------O--+    +----O----+
 | Used |
 |Anvils|        Town Square     +--------+
-|      |                        |Obs Deck|
+|      O                        |Obs Deck|
 +------++----O----+    +----O----/  /
         | Black-  O    | Wizard /  /
         | smith   |    | Tower    /
@@ -81,12 +81,12 @@ variables (e.g. DESC, NORTH, etc.) instead of strings in case we make
 typos.
 
 DESC is a text description of the area. SHOP, if it exists, is a list of
-objects that can be bought at this area. (We don't implement money in this
-program, so everything is free.) GROUND is a list of objects that are on
+items that can be bought at this area. (We don't implement money in this
+program, so everything is free.) GROUND is a list of items that are on
 the ground in this area. The directions (NORTH, SOUTH, UP, etc.) are the
 areas that exist in that direction.
 """
-world = {
+worldRooms = {
     'Town Square': {
         DESC: 'The town square is a large open space with a fountain in the center. Streets lead in all directions.',
         NORTH: 'North Y Street',
@@ -119,7 +119,7 @@ world = {
         WEST: 'Used Anvils Store',
         GROUND: []},
     'Used Anvils Store': {
-        DESC: 'The anvil store has anvils of all types and sizes, each previously-owned but still in servicable condition. However, due to a bug in the way this game is designed, you can buy anvils like any other item and walk around, but if you drop them they cannot be picked up since their TAKEABLE value is set to False. LOL',
+        DESC: 'The anvil store has anvils of all types and sizes, each previously-owned but still in servicable condition. However, due to a bug in the way this game is designed, you can buy anvils like any other item and walk around, but if you drop them they cannot be picked up since their TAKEABLE value is set to False. The code should be changed so that it\'s not possible for shops to sell items with TAKEABLE set to False.',
         EAST: 'West X Street',
         SHOP: ['Anvil'],
         GROUND: ['Anvil', 'Anvil', 'Anvil', 'Anvil']},
@@ -158,15 +158,15 @@ world = {
     }
 
 """
-This is the index of all possible objects in the game world. Note that These
-key-value pairs are more like blueprints than actual objects. The actual
-objects exist in the GROUND value in an area's entry in the world variable.
+This is the index of all possible items in the game world. Note that These
+key-value pairs are more like blueprints than actual items. The actual
+items exist in the GROUND value in an area's entry in the world variable.
 
 The GROUNDDESC value is a short string that displays in the area's description.
 The SHORTDESC value is a short string that will be used in sentences like, "You
 drop X." or "You buy X."
-The LONGDESC value is displayed when the player looks at the object.
-The TAKEABLE Boolean value is True if the player can pick up the object and put
+The LONGDESC value is displayed when the player looks at the item.
+The TAKEABLE Boolean value is True if the player can pick up the item and put
 it in their inventory.
 The DESCWORDS value is a list of strings that can be used in the player's
 commands. For example, if this is ['welcome', 'sign'] then the player can type
@@ -176,7 +176,7 @@ this key doesn't exist, it defaults to True.
 The EDIBLE value is True if the item can be eaten. If this key doesn't exist,
 it defaults to False.
 """
-objects = {
+worldItems = {
     'Welcome Sign': {
         GROUNDDESC: 'A welcome sign stands here.',
         SHORTDESC: 'a welcome sign',
@@ -276,47 +276,55 @@ objects = {
 """
 These variables track where the player is and what is in their inventory.
 The value in the location variable will always be a key in the world variable
-and the value in the inventory list will always be a key in the objects
+and the value in the inventory list will always be a key in the worldItems
 variable.
 """
 location = 'Town Square' # start in town square
 inventory = ['README Note', 'Sword', 'Donut'] # start with blank inventory
 showFullExits = True
 
-import cmd, sys, textwrap
+import cmd, textwrap
+
+def displayLocation(loc):
+    """A helper function for displaying an area's description and exits."""
+    # Print the room name.
+    print(loc)
+    print('=' * len(loc))
+
+    # Print the room's description (using textwrap.wrap())
+    print('\n'.join(textwrap.wrap(worldRooms[loc][DESC], SCREEN_WIDTH)))
+
+    # Print all the items on the ground.
+    if len(worldRooms[loc][GROUND]) > 0:
+        print()
+        for item in worldRooms[loc][GROUND]:
+            print(worldItems[item][GROUNDDESC])
+
+    # Print all the exits.
+    exits = []
+    for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
+        if direction in worldRooms[loc].keys():
+            exits.append(direction.title())
+    print()
+    if showFullExits:
+        for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
+            if direction in worldRooms[location]:
+                print('%s: %s' % (direction.title(), worldRooms[location][direction]))
+    else:
+        print('Exits: %s' % ' '.join(exits))
+
 
 def moveDirection(direction):
     """A helper function that changes the location of the player."""
     global location
 
-    if direction in world[location]:
+    if direction in worldRooms[location]:
         print('You move to the %s.' % direction)
-        location = world[location][direction]
+        location = worldRooms[location][direction]
         displayLocation(location)
     else:
         print('You cannot move in that direction')
 
-
-def displayLocation(loc):
-    """A helper function for displaying an area's description and exits."""
-    print(loc)
-    print('=' * len(loc))
-    print('\n'.join(textwrap.wrap(world[loc][DESC], SCREEN_WIDTH)))
-    if len(world[loc][GROUND]) > 0:
-        print()
-        for item in world[loc][GROUND]:
-            print(objects[item][GROUNDDESC])
-    exits = []
-    for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-        if direction in world[loc].keys():
-            exits.append(direction.title())
-    print()
-    if showFullExits:
-        for direction in (NORTH, SOUTH, EAST, WEST, UP, DOWN):
-            if direction in world[location]:
-                print('%s: %s' % (direction.title(), world[location][direction]))
-    else:
-        print('Exits: %s' % ' '.join(exits))
 
 # TEMPORARY CODE:
 while True:
