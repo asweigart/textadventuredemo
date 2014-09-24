@@ -473,23 +473,6 @@ class TextAdventureCmd(cmd.Cmd):
             print('That is not on the ground.')
 
 
-    def complete_take(self, text, arg, begidx, endidx):
-        possibleItems = []
-        text = text.lower()
-
-        # if the user has only typed "take" but no item name:
-        if not text:
-            return getAllFirstDescWords(worldRooms[location][GROUND])
-
-        # otherwise, get a list of all "description words" for ground items matching the command text so far:
-        for item in list(set(worldRooms[location][GROUND])):
-            for descWord in worldItems[item][DESCWORDS]:
-                if descWord.startswith(text) and worldItems[item].get(TAKEABLE, True):
-                    possibleItems.append(descWord)
-
-        return list(set(possibleItems)) # make list unique
-
-
     def do_drop(self, arg):
         """"drop <item> - Drop an item from your inventory onto the ground."""
 
@@ -512,7 +495,24 @@ class TextAdventureCmd(cmd.Cmd):
             worldRooms[location][GROUND].append(item) # add to the ground
 
 
-    def complete_drop(self, text, arg, begidx, endidx):
+    def complete_take(self, text, line, begidx, endidx):
+        possibleItems = []
+        text = text.lower()
+
+        # if the user has only typed "take" but no item name:
+        if not text:
+            return getAllFirstDescWords(worldRooms[location][GROUND])
+
+        # otherwise, get a list of all "description words" for ground items matching the command text so far:
+        for item in list(set(worldRooms[location][GROUND])):
+            for descWord in worldItems[item][DESCWORDS]:
+                if descWord.startswith(text) and worldItems[item].get(TAKEABLE, True):
+                    possibleItems.append(descWord)
+
+        return list(set(possibleItems)) # make list unique
+
+
+    def complete_drop(self, text, line, begidx, endidx):
         possibleItems = []
         itemToDrop = text.lower()
 
@@ -520,7 +520,7 @@ class TextAdventureCmd(cmd.Cmd):
         invDescWords = getAllDescWords(inventory)
 
         for descWord in invDescWords:
-            if arg.startswith('drop %s' % (descWord)):
+            if line.startswith('drop %s' % (descWord)):
                 return [] # command is complete
 
         # if the user has only typed "drop" but no item name:
@@ -586,7 +586,7 @@ class TextAdventureCmd(cmd.Cmd):
         print('You do not see that nearby.')
 
 
-    def complete_look(self, text, arg, begidx, endidx):
+    def complete_look(self, text, line, begidx, endidx):
         possibleItems = []
         lookingAt = text.lower()
 
@@ -596,7 +596,7 @@ class TextAdventureCmd(cmd.Cmd):
         shopDescWords = getAllDescWords(worldRooms[location].get(SHOP, []))
 
         for descWord in invDescWords + groundDescWords + shopDescWords + [NORTH, SOUTH, EAST, WEST, UP, DOWN]:
-            if arg.startswith('look %s' % (descWord)):
+            if line.startswith('look %s' % (descWord)):
                 return [] # command is complete
 
         # if the user has only typed "look" but no item name, show all items on ground, shop and directions:
@@ -670,7 +670,7 @@ class TextAdventureCmd(cmd.Cmd):
         print('"%s" is not sold here. Type "list" or "list full" to see a list of items for sale.' % (itemToBuy))
 
 
-    def complete_buy(self, text, arg, begidx, endidx):
+    def complete_buy(self, text, line, begidx, endidx):
         if SHOP not in worldRooms[location]:
             return []
 
@@ -713,7 +713,7 @@ class TextAdventureCmd(cmd.Cmd):
         print('You do not have "%s". Type "inventory" or "inv" to see your inventory.' % (itemToSell))
 
 
-    def complete_sell(self, text, arg, begidx, endidx):
+    def complete_sell(self, text, line, begidx, endidx):
         if SHOP not in worldRooms[location]:
             return []
 
@@ -759,7 +759,7 @@ class TextAdventureCmd(cmd.Cmd):
             print('You do not have "%s". Type "inventory" or "inv" to see your inventory.' % (itemToEat))
 
 
-    def complete_eat(self, text, arg, begidx, endidx):
+    def complete_eat(self, text, line, begidx, endidx):
         itemToEat = text.lower()
         possibleItems = []
 
