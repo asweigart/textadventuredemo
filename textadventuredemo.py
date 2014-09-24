@@ -362,11 +362,11 @@ class TextAdventureCmd(cmd.Cmd):
     prompt = '\n> '
 
     # The default() method is called when none of the other do_*() command methods match.
-    def default(self, line):
+    def default(self, arg):
         print('I do not understand that command. Type "help" for a list of commands.')
 
     # A very simple "quit" command to terminate the program:
-    def do_quit(self, line):
+    def do_quit(self, arg):
         """Quit the game."""
         return True # this exits the Cmd application loop in TextAdventureCmd.cmdloop()
 
@@ -377,27 +377,27 @@ class TextAdventureCmd(cmd.Cmd):
     # These direction commands have a long (i.e. north) and show (i.e. n) form.
     # Since the code is basically the same, I put it in the moveDirection()
     # function.
-    def do_north(self, line):
+    def do_north(self, arg):
         """Go to the area to the north, if possible."""
         moveDirection('north')
 
-    def do_south(self, line):
+    def do_south(self, arg):
         """Go to the area to the south, if possible."""
         moveDirection('south')
 
-    def do_east(self, line):
+    def do_east(self, arg):
         """Go to the area to the east, if possible."""
         moveDirection('east')
 
-    def do_west(self, line):
+    def do_west(self, arg):
         """Go to the area to the west, if possible."""
         moveDirection('west')
 
-    def do_up(self, line):
+    def do_up(self, arg):
         """Go to the area upwards, if possible."""
         moveDirection('up')
 
-    def do_down(self, line):
+    def do_down(self, arg):
         """Go to the area downwards, if possible."""
         moveDirection('down')
 
@@ -410,7 +410,7 @@ class TextAdventureCmd(cmd.Cmd):
     do_u = do_up
     do_d = do_down
 
-    def do_exits(self, line):
+    def do_exits(self, arg):
         """Toggle showing full exit descriptions or brief exit descriptions."""
         global showFullExits
         showFullExits = not showFullExits
@@ -419,7 +419,7 @@ class TextAdventureCmd(cmd.Cmd):
         else:
             print('Showing brief exit descriptions.')
 
-    def do_inventory(self, line):
+    def do_inventory(self, arg):
         """Display a list of the items in your possession."""
 
         if len(inventory) == 0:
@@ -445,11 +445,11 @@ class TextAdventureCmd(cmd.Cmd):
     do_inv = do_inventory
 
 
-    def do_take(self, line):
+    def do_take(self, arg):
         """"take <item> - Take an item on the ground."""
 
         # put this value in a more suitably named variable
-        itemToTake = line.lower()
+        itemToTake = arg.lower()
 
         if itemToTake == '':
             print('Take what? Type "look" the items on the ground here.')
@@ -473,7 +473,7 @@ class TextAdventureCmd(cmd.Cmd):
             print('That is not on the ground.')
 
 
-    def complete_take(self, text, line, begidx, endidx):
+    def complete_take(self, text, arg, begidx, endidx):
         possibleItems = []
         text = text.lower()
 
@@ -490,11 +490,11 @@ class TextAdventureCmd(cmd.Cmd):
         return list(set(possibleItems)) # make list unique
 
 
-    def do_drop(self, line):
+    def do_drop(self, arg):
         """"drop <item> - Drop an item from your inventory onto the ground."""
 
         # put this value in a more suitably named variable
-        itemToDrop = line.lower()
+        itemToDrop = arg.lower()
 
         # get a list of all "description words" for each item in the inventory
         invDescWords = getAllDescWords(inventory)
@@ -510,9 +510,9 @@ class TextAdventureCmd(cmd.Cmd):
             print('You drop %s.' % (worldItems[item][SHORTDESC]))
             inventory.remove(item) # remove from inventory
             worldRooms[location][GROUND].append(item) # add to the ground
-            return
 
-    def complete_drop(self, text, line, begidx, endidx):
+
+    def complete_drop(self, text, arg, begidx, endidx):
         possibleItems = []
         itemToDrop = text.lower()
 
@@ -520,7 +520,7 @@ class TextAdventureCmd(cmd.Cmd):
         invDescWords = getAllDescWords(inventory)
 
         for descWord in invDescWords:
-            if line.startswith('drop %s' % (descWord)):
+            if arg.startswith('drop %s' % (descWord)):
                 return [] # command is complete
 
         # if the user has only typed "drop" but no item name:
@@ -535,14 +535,14 @@ class TextAdventureCmd(cmd.Cmd):
         return list(set(possibleItems)) # make list unique
 
 
-    def do_look(self, line):
+    def do_look(self, arg):
         """Look at an item, direction, or the area:
 "look" - display the current area's description
 "look <direction>" - display the description of the area in that direction
 "look exits" - display the description of all adjacent areas
 "look <item>" - display the description of an item on the ground or in your inventory"""
 
-        lookingAt = line.lower()
+        lookingAt = arg.lower()
         if lookingAt == '':
             # "look" will re-print the area description
             displayLocation(location)
@@ -586,7 +586,7 @@ class TextAdventureCmd(cmd.Cmd):
         print('You do not see that nearby.')
 
 
-    def complete_look(self, text, line, begidx, endidx):
+    def complete_look(self, text, arg, begidx, endidx):
         possibleItems = []
         lookingAt = text.lower()
 
@@ -596,7 +596,7 @@ class TextAdventureCmd(cmd.Cmd):
         shopDescWords = getAllDescWords(worldRooms[location].get(SHOP, []))
 
         for descWord in invDescWords + groundDescWords + shopDescWords + [NORTH, SOUTH, EAST, WEST, UP, DOWN]:
-            if line.startswith('look %s' % (descWord)):
+            if arg.startswith('look %s' % (descWord)):
                 return [] # command is complete
 
         # if the user has only typed "look" but no item name, show all items on ground, shop and directions:
@@ -631,28 +631,28 @@ class TextAdventureCmd(cmd.Cmd):
         return list(set(possibleItems)) # make list unique
 
 
-    def do_list(self, line):
+    def do_list(self, arg):
         """List the items for sale at the current location's shop. "list full" will show details of the items."""
         if SHOP not in worldRooms[location]:
             print('This is not a shop.')
             return
 
-        line = line.lower()
+        arg = arg.lower()
 
         print('For sale:')
         for item in worldRooms[location][SHOP]:
             print('  - %s' % (item))
-            if line == 'full':
+            if arg == 'full':
                 print('\n'.join(textwrap.wrap(worldItems[item][LONGDESC], SCREEN_WIDTH)))
 
 
-    def do_buy(self, line):
+    def do_buy(self, arg):
         """"buy <item>" - buy an item at the current location's shop."""
         if SHOP not in worldRooms[location]:
             print('This is not a shop.')
             return
 
-        itemToBuy = line.lower()
+        itemToBuy = arg.lower()
 
         if itemToBuy == '':
             print('Buy what? Type "list" or "list full" to see a list of items for sale.')
@@ -670,7 +670,7 @@ class TextAdventureCmd(cmd.Cmd):
         print('"%s" is not sold here. Type "list" or "list full" to see a list of items for sale.' % (itemToBuy))
 
 
-    def complete_buy(self, text, line, begidx, endidx):
+    def complete_buy(self, text, arg, begidx, endidx):
         if SHOP not in worldRooms[location]:
             return []
 
@@ -690,13 +690,13 @@ class TextAdventureCmd(cmd.Cmd):
         return list(set(possibleItems)) # make list unique
 
 
-    def do_sell(self, line):
+    def do_sell(self, arg):
         """"sell <item>" - sell an item at the current location's shop."""
         if SHOP not in worldRooms[location]:
             print('This is not a shop.')
             return
 
-        itemToSell = line.lower()
+        itemToSell = arg.lower()
 
         if itemToSell == '':
             print('Sell what? Type "inventory" or "inv" to see your inventory.')
@@ -713,7 +713,7 @@ class TextAdventureCmd(cmd.Cmd):
         print('You do not have "%s". Type "inventory" or "inv" to see your inventory.' % (itemToSell))
 
 
-    def complete_sell(self, text, line, begidx, endidx):
+    def complete_sell(self, text, arg, begidx, endidx):
         if SHOP not in worldRooms[location]:
             return []
 
@@ -733,9 +733,9 @@ class TextAdventureCmd(cmd.Cmd):
         return list(set(possibleItems)) # make list unique
 
 
-    def do_eat(self, line):
+    def do_eat(self, arg):
         """"eat <item>" - eat an item in your inventory."""
-        itemToEat = line.lower()
+        itemToEat = arg.lower()
 
         if itemToEat == '':
             print('Eat what? Type "inventory" or "inv" to see your inventory.')
@@ -759,7 +759,7 @@ class TextAdventureCmd(cmd.Cmd):
             print('You do not have "%s". Type "inventory" or "inv" to see your inventory.' % (itemToEat))
 
 
-    def complete_eat(self, text, line, begidx, endidx):
+    def complete_eat(self, text, arg, begidx, endidx):
         itemToEat = text.lower()
         possibleItems = []
 

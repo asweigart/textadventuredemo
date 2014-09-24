@@ -419,6 +419,57 @@ class TextAdventureCmd(cmd.Cmd):
             print('Showing brief exit descriptions.')
 
 
+    def do_take(self, arg):
+        """"take <item> - Take an item on the ground."""
+
+        # put this value in a more suitably named variable
+        itemToTake = arg.lower()
+
+        if itemToTake == '':
+            print('Take what? Type "look" the items on the ground here.')
+            return
+
+        cantTake = False
+
+        # get the item name that the player's command describes
+        for item in getAllItemsMatchingDesc(itemToTake, worldRooms[location][GROUND]):
+            if worldItems[item].get(TAKEABLE, True) == False:
+                cantTake = True
+                continue # there may be other items named this that you can take, so we continue checking
+            print('You take %s.' % (worldItems[item][SHORTDESC]))
+            worldRooms[location][GROUND].remove(item) # remove from the ground
+            inventory.append(item) # add to inventory
+            return
+
+        if cantTake:
+            print('You cannot take "%s".' % (itemToTake))
+        else:
+            print('That is not on the ground.')
+
+
+    def do_drop(self, arg):
+        """"drop <item> - Drop an item from your inventory onto the ground."""
+
+        # put this value in a more suitably named variable
+        itemToDrop = arg.lower()
+
+        # get a list of all "description words" for each item in the inventory
+        invDescWords = getAllDescWords(inventory)
+
+        # find out if the player doesn't have that item
+        if itemToDrop not in invDescWords:
+            print('You do not have "%s" in your inventory.' % (itemToDrop))
+            return
+
+        # get the item name that the player's command describes
+        item = getFirstItemMatchingDesc(itemToDrop, inventory)
+        if item != None:
+            print('You drop %s.' % (worldItems[item][SHORTDESC]))
+            inventory.remove(item) # remove from inventory
+            worldRooms[location][GROUND].append(item) # add to the ground
+            return
+
+
 if __name__ == '__main__':
     print('Text Adventure Demo!')
     print('====================')
